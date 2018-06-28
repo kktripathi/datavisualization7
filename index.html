@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  
+<head>
+    <title>Chart using d3.js</title>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    
+    <style>
+        body {background-color: AliceBlue;}
+        h1 {color: #0d0033;}    
+        p {color: blue;}
+            body {
+            font: 10px sans-serif;
+            }
+            .xAxis path, .yAxis path,
+            .xAxis line, .yAxis line {
+             fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+            }
+
+            .line {
+            fill: none;
+            stroke: brown;
+            stroke-width: 2.0px;
+            }
+    </style>
+</head>
+
+<body>
+    
+    <center><h1>Line Chart</h1></center>
+
+    <script type='text/javascript'>
+    var div = d3.select('body').append('div')
+      
+    // Set the margins
+    var margin = {top: 30, right: 20, bottom: 30, left: 70},
+    width = 900 - margin.left - margin.right,
+    height = 680 - margin.top - margin.bottom;
+
+    // Parse the year variable
+    var parseDate = d3.time.format("%y").parse;
+    var formatPct = d3.format('');
+    var formatxAxis = d3.format('.0f');
+
+    // Set the ranges
+    var x = d3.time.scale()
+    .rangeRound([0, width]);
+    x.ticks(d3.time.year);
+
+    var y = d3.scale.linear()
+    .rangeRound([height, 0]);
+
+    var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickFormat(formatxAxis)
+    .ticks(5);
+
+    var yAxis = d3.svg.axis()
+    .scale(y)
+    .tickFormat(formatPct)
+    .orient("left");
+
+    // Define the line
+    var line = d3.svg.line()
+    .x(function(d) { return x(d.year); })
+    .y(function(d) { return y(d.amount); });
+    
+    // Create the svg canvas
+    var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var dataFiltered = {}
+    var dataNested = {}
+
+    // Import the CSV data
+    d3.csv("chartdata.csv", function(error, data) {
+    data.forEach(function(d) {
+     
+        // Format the data
+        d.year = +d.year;
+        d.amount = +d.amount;
+    });
+
+    var dataNested = d3.nest()
+    .key(function (d) { return d.donor })
+    .entries(data)
+
+    div.append('select')
+        .attr('id','variableSelect')
+        .on('change',variableChange)
+        .selectAll('option')  
+        .data(dataNested).enter()
+        .append('option')
+        .attr('value',function (d) { return d.key })
+        .text(function (d) { return d.key })
+
+    // Filter the data
+    var dataFiltered = dataNested.filter(function (d) { return d.key===d3.select('#variableSelect').property('value') })
+
+    // Scale the range of the data
+    x.domain(d3.extent(dataFiltered[0].values, function(d) { return d.year; }));
+    y.domain(d3.extent(dataFiltered[0].values, function(d) { return d.amount; }));
+
+    // Set up the x axis
+    svg.append("g")
+        .attr("class", "xAxis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+    // Add a label to the y axis
+    svg.append("g")
+        .attr("class", "yAxis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 8)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Amount (USD)");
+
+    svg.append("path")
+        .datum(dataFiltered[0].values)
+        .attr("class", "line")
+        .attr("d", line)
+        .text("Year");
+
+    // Add the title
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "20px") 
+        .style("text-decoration", "underline")  
+        .text("Yearly donations by the countries");
+
+    // Create a dropdown
+    function variableChange() {
+  	    var value = this.value
+   	    var dataFiltered = dataNested.filter(function (d) { return d.key===value })
+        x.domain(d3.extent(dataFiltered[0].values, function(d) { return d.year; }));
+        y.domain(d3.extent(dataFiltered[0].values, function(d) { return d.amount; }));
+        d3.select('.xAxis').transition().duration(1000).call(xAxis)
+        d3.select('.yAxis').transition().duration(1000).call(yAxis)
+        d3.select('.line').datum(dataFiltered[0].values).attr('d',line)
+	    }
+
+    });
+
+    </script>
+
+<!-- write up part-->
+  
+   <h2>Process/code description</h2>
+    <ul>
+        <li>To create this line chart with a drop-down menu using d3.js, I used the VI3 dataset and refined it for the VI7, which is named as <i>chartdata.csv</i>.</li>
+        <li> In the script, first, I set the margins for the SVG as top: 30, right: 20, bottom: 30, left: 70 with the width:900 
+            and height:680. Then after, I parsed the year variable using the 'parseDate' variable because my data contains year values as date. In the next step,
+            I set the range of x and y-axis followed by the orientation of x and y-axis as bottom and left respectively. 
+            To define the line, 'd3.svg.line()' method has been used in this code.
+            After that, I created the svg canvas and used its' two methods- '.attr' and '.append'.
+        <li> Now in the next step, I imported the CSV data file called 'chartdata.csv' and then format the 'year' and 'amount' data values.
+            To scale the range of the data, I used 'x.domain' and 'y.domain' methods. </li>
+        <li> To set up the x-axis and y-axis along with adding the label on y-axis as "Amount (USD)", svg.append("g") method has been used
+             where x-axis and y-axis are attributes. The y-axis label is rotated -90 degrees to make it better fit along with the y-axis. 
+            To add the title ("Yearly donations by the countries") of this chart, svg.append("text") method has been used.</li>
+        <li> Finally, I used the 'function variableChange()' in the creation of dropdown menu for the donar countries.
+        In this line chart, brown color has been considered for the representation of line color. Aditionally, all other CSS code is also placed inside the style tag.</li>
+    </ul>
+    
+    <br />
+
+<!-- Helpful tutorial links -->
+    <h3>Helpful tutorials/examples </h3>
+    <ul>
+        
+        <li><a href="http://bl.ocks.org/jfreels/6734823"> d3js: Create an HTML select box using d3.js and create a paragraph referencing the selection</a>
+        </li>
+        <li><a href="http://bl.ocks.org/jhubley/17aa30fd98eb0cc7072f"> Line chart with dropdown selector</a>
+        </li>
+        <li><a href="https://bl.ocks.org/ProQuestionAsker/8382f70af7f4a7355827c6dc4ee8817d"> d3v4 Multi-Line Chart with Dropdown Menu and Nestingr</a>
+        </li>
+    </ul>
+</body>
+</html>

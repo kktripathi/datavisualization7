@@ -1,2 +1,3 @@
-# datavisualization7
-Using d3: country wise yearly donation amount visualization using Line chart
+Kamla Kant Tripathi, CS 725/825, Fall 2017
+
+http://www.cs.odu.edu/~ktripath/cs725/VI7/index.html
